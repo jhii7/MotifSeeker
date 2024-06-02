@@ -385,6 +385,18 @@ def ComputeEnrichment(peak_total, peak_motif, bg_total, bg_motif):
     _, pval = scipy.stats.fisher_exact(table)
     return pval
 
+def ExtractSequencesFromMotifFile(file_path):
+    sequences = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.startswith(">"):
+                sequence = line.split()[0][1:]
+                sequences.append(sequence)
+    return sequences
+
+file_path = "../motifs/custom.motifs"
+sequences = ExtractSequencesFromMotifFile(file_path)
+
 ##################################
 
 # Create parser
@@ -419,6 +431,7 @@ if args.out is None:
         outf = sys.stdout
 else: 
         outf = open(args.out, "w")
+
 
 
 # Do something with input and genome file if they exist.
