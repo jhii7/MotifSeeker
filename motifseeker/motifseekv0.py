@@ -142,34 +142,30 @@ def GetPWM(binding_sites, background_freqs=[0.25, 0.25, 0.25, 0.25]):
     
     Returns
     -------
-        pwm : 2d np.array
-        
-    Assumes all sequences have the same length
+        pwms : list of numpy.ndarray
+            List of PWMs, one for each sequence.
     """
-    if not binding_sites:
-        return np.array([])
-
-    max_length = max(len(seq) for seq in binding_sites)
-    padded_sequences = [seq.ljust(max_length, 'N') for seq in binding_sites]  # Pad sequences with 'N'
+    pwms = []
+    nucs = {"A": 0, "C": 1, "G": 2, "T": 3}
     
-    nucs = {"A": 0, "C": 1, "G": 2, "T": 3, "N": 4}
-    pfm = np.zeros((5, max_length))
-
-    for seq in padded_sequences:
+    for seq in sequences:
+        length = len(seq)
+        pfm = np.zeros((4, length))
         for idx, nucleotide in enumerate(seq):
             if nucleotide in nucs:
                 pfm[nucs[nucleotide], idx] += 1
-
-    pfm = pfm[:4, :]  # Only take rows for A, C, G, T
-
-    pfm += 0.01  # Apply pseudocounts to avoid division by zero
-    col_sums = np.sum(pfm, axis=0)
-    pwm = np.zeros(pfm.shape)
-
-    for i in range(4):
-        pwm[i, :] = np.log2((pfm[i, :] / col_sums) / background_freqs[i])
-
-    return pwm
+        
+        pfm += 0.01
+        
+        col_sums = np.sum(pfm, axis=0)
+        pwm = np.zeros_like(pfm)
+        
+        for i in range(4):
+            pwm[i, :] = np.log2((pfm[i, :] / col_sums) / background_freqs[i])
+        
+        pwms.append(pwm)
+    
+    return pwms
 
 def ScoreSeq(pwm, sequence):
     """ Score a sequence using a PWM
@@ -437,8 +433,3 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        pwms = GetPWM(sequences)
        print(pfms)
        print(pwms)
-       
-
-
-
-
