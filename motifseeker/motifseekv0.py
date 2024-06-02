@@ -147,14 +147,13 @@ def GetPWM(binding_sites, background_freqs=[0.25, 0.25, 0.25, 0.25]):
     """
     pwm = np.zeros((4, len(binding_sites[0])))
     pfm = GetPFM(binding_sites)
-    #pfm = pfm + 0.01 
-    for sequenceofarrays in pfm:
-         for seq in sequenceofarrays:
-            for num in seq: 
-                num += 0.01
-    for i in range(4):
-        for j in range(len(pfm[0])):
-            pwm[i][j] = math.log2((pfm[i,j]/np.sum(pfm[:,j])) / background_freqs[i])
+    pfm = pfm + 0.01 
+
+    for j in range(pfm.shape[1]):
+        col_sum = np.sum(pfm[:, j])
+        for i in range(4):
+            p_ij = pfm[i, j] / col_sum
+            pwm[i, j] = math.log2(p_ij / background_freqs[i])
     return pwm
 
 def ScoreSeq(pwm, sequence):
