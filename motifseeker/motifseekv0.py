@@ -430,10 +430,6 @@ else:
 if ((args.inputfile is not None) and (args.genome is not None)):
 
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
-
-       print(sequences)
-
-
        pfms = GetPFM(sequences)
        pwms = GetPWM(sequences)
        print(pwms)
