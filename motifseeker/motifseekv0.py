@@ -385,8 +385,6 @@ def ComputeEnrichment(peak_total, peak_motif, bg_total, bg_motif):
     _, pval = scipy.stats.fisher_exact(table)
     return pval
 
-
-    
 ##################################
 
 # Create parser
