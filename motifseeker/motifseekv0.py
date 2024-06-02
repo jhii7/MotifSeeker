@@ -118,6 +118,7 @@ def GetPFM(sequences):
     -------
         pfm : 2d np.array
     """
+    
     nucs = {"A": 0, "C": 1, "G": 2, "T": 3}
     pfms = []
     for seq in sequences:
@@ -145,16 +146,29 @@ def GetPWM(binding_sites, background_freqs=[0.25, 0.25, 0.25, 0.25]):
         
     Assumes all sequences have the same length
     """
-    pwm = np.zeros((4, len(binding_sites[0])))
-    pfm = GetPFM(binding_sites)
-    pfm = pfm + 0.01 
+    if not binding_sites:
+        return np.array([])
 
-    for j in range(pfm.shape[1]):
-        col_sum = np.sum(pfm[:, j])
-        for i in range(4):
-            p_ij = pfm[i, j] / col_sum
-            pwm[i, j] = math.log2(p_ij / background_freqs[i])
-            
+    max_length = max(len(seq) for seq in binding_sites)
+    padded_sequences = [seq.ljust(max_length, 'N') for seq in binding_sites]  # Pad sequences with 'N'
+    
+    nucs = {"A": 0, "C": 1, "G": 2, "T": 3, "N": 4}
+    pfm = np.zeros((5, max_length))
+
+    for seq in padded_sequences:
+        for idx, nucleotide in enumerate(seq):
+            if nucleotide in nucs:
+                pfm[nucs[nucleotide], idx] += 1
+
+    pfm = pfm[:4, :]  # Only take rows for A, C, G, T
+
+    pfm += 0.01  # Apply pseudocounts to avoid division by zero
+    col_sums = np.sum(pfm, axis=0)
+    pwm = np.zeros(pfm.shape)
+
+    for i in range(4):
+        pwm[i, :] = np.log2((pfm[i, :] / col_sums) / background_freqs[i])
+
     return pwm
 
 def ScoreSeq(pwm, sequence):
@@ -419,8 +433,6 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
 
        print(sequences)
-
-
        pfms = GetPFM(sequences)
        pwms = GetPWM(sequences)
        print(pfms)
