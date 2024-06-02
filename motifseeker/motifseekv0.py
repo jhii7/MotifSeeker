@@ -430,8 +430,10 @@ else:
 if ((args.inputfile is not None) and (args.genome is not None)):
 
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
-       pfms = GetPFM(sequences)
+
+       # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(sequences)
+       
        print(pwms)
        
 
