@@ -173,11 +173,39 @@ def ParseMotifsFile(filename):
   with open(filename, "r") as f:
     for line in f:
       if line.startswith(">"):
-        # Header line: store info in a dictionary
-        motif_info = []
-        motif_info.append(line.split()[0].strip(">"))
-        motifs.append(motif_info)
+        #motif_info = []
+        #motif_info.append(line.split()[0].strip(">"))
+        motifs.append(line.split()[0].strip(">"))
     return motifs
+  
+def FindExactMatches(sequences, motifs):
+    # Find exact matches for motifs in database
+    found_motifs = []
+    for motif in motifs:
+        for sequence in sequences:
+            # Check if motif is present in the sequence using string matching
+            if motif in sequence:
+                found_motifs.append(motif)
+    return found_motifs
+
+def get_reads(sequences, start, end):
+  """
+  This function takes a DNA sequence string and returns a list of all possible reads of length from start (inclusive) to end (inclusive)
+
+  Args:
+      sequence: The DNA sequence string
+      start: The minimum length of the reads (inclusive)
+      end: The maximum length of the reads (inclusive)
+
+  Returns:
+      A list of all possible reads of length from start to end
+  """
+  reads = []
+  for sequence in sequences:
+    for i in range(len(sequence) - (end - 1)):
+        for j in range(start, end + 1):
+            reads.append(sequence[i:i + j])
+  return reads
 
 def ScoreSeq(pwm, sequence):
     """ Score a sequence using a PWM
@@ -437,13 +465,18 @@ else:
 
 # Do something with input and genome file if they exist.
 if ((args.inputfile is not None) and (args.genome is not None)):
-
+       
+       # Get sequences, store in var sequences
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(sequences)
+
        # Store HOMER motifs in var motifs
        motifs = ParseMotifsFile("../motifs/custom.motifs")
+
+       # Find exact matches (TESTING)
+       print(FindExactMatches(sequences, motifs))
        
        
        
