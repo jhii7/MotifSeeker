@@ -188,24 +188,18 @@ def FindExactMatches(sequences, motifs):
                 found_motifs.append(motif)
     return found_motifs
 
-def get_reads(sequences, start, end):
-  """
-  This function takes a DNA sequence string and returns a list of all possible reads of length from start (inclusive) to end (inclusive)
-
-  Args:
-      sequence: The DNA sequence string
-      start: The minimum length of the reads (inclusive)
-      end: The maximum length of the reads (inclusive)
-
-  Returns:
-      A list of all possible reads of length from start to end
-  """
-  reads = []
-  for sequence in sequences:
-    for i in range(len(sequence) - (end - 1)):
-        for j in range(start, end + 1):
-            reads.append(sequence[i:i + j])
-  return reads
+def get_reads(sequences):
+    # Generates reads of length 3 from sequences
+    reads = []
+    for sequence in sequences:
+        i = 0
+        end = 3
+        while end < len(sequence) + 1:
+            print(sequence)
+            reads.append(sequence[i:end])
+            i += 1
+            end += 1
+    return reads
 
 def ScoreSeq(pwm, sequence):
     """ Score a sequence using a PWM
@@ -468,6 +462,7 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        
        # Get sequences, store in var sequences
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
+       print(get_reads(sequences))
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(sequences)
@@ -476,7 +471,7 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        motifs = ParseMotifsFile("../motifs/custom.motifs")
 
        # Find exact matches (TESTING)
-       print(FindExactMatches(sequences, motifs))
+       # print(FindExactMatches(sequences, motifs))
        
        
        
