@@ -467,10 +467,10 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
        
 
-       # Get reads from sequences lengths 7 to 23
+       # Get reads from sequences lengths 8 to 25
        reads = []
-       i = 7 # Minimum motif length from HOMER database
-       while i < 23: # Maximum motif length from HOMER database
+       i = 8 # Minimum motif length from HOMER database
+       while i < 25: # Maximum motif length from HOMER database
            reads.append(get_reads(sequences, i))
            i += 1
 
@@ -481,7 +481,6 @@ if ((args.inputfile is not None) and (args.genome is not None)):
 
        # Store HOMER motifs in var motifs
        motifs = ParseMotifsFile("../motifs/custom.motifs")
-
 
        # Find exact matches (TESTING)
        # print(FindExactMatches(reads, motifs))
