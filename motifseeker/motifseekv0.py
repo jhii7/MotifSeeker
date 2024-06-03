@@ -188,14 +188,13 @@ def FindExactMatches(sequences, motifs):
                 found_motifs.append(motif)
     return found_motifs
 
-def get_reads(sequences):
-    # Generates reads of length 3 from sequences
+def get_reads(sequences, length):
+    # Generates reads of length from sequences, store in array
     reads = []
     for sequence in sequences:
         i = 0
-        end = 3
+        end = length
         while end < len(sequence) + 1:
-            print(sequence)
             reads.append(sequence[i:end])
             i += 1
             end += 1
@@ -462,16 +461,22 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        
        # Get sequences, store in var sequences
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
-       print(get_reads(sequences))
+       
+       # Get reads from sequences lengths 7 to 23
+       reads = []
+       i = 7
+       while i < 23:
+           reads.append(get_reads(sequences, i))
+           i += 1
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
-       pwms = GetPWM(sequences)
+       pwms = GetPWM(reads)
 
        # Store HOMER motifs in var motifs
        motifs = ParseMotifsFile("../motifs/custom.motifs")
 
        # Find exact matches (TESTING)
-       # print(FindExactMatches(sequences, motifs))
+       print(FindExactMatches(reads, motifs))
        
        
        
