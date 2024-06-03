@@ -145,30 +145,47 @@ def GetPWM(binding_sites, background_freqs=[0.25, 0.25, 0.25, 0.25]):
         
     Assumes all sequences have the same length
     """
-    if not binding_sites:
-        return np.array([])
-
-    max_length = max(len(seq) for seq in binding_sites)
-    padded_sequences = [seq.ljust(max_length, 'N') for seq in binding_sites]  # Pad sequences with 'N'
+    pwms = []
+    nucs = {"A": 0, "C": 1, "G": 2, "T": 3}
     
-    nucs = {"A": 0, "C": 1, "G": 2, "T": 3, "N": 4}
-    pfm = np.zeros((5, max_length))
-
-    for seq in padded_sequences:
+    for seq in sequences:
+        length = len(seq)
+        pfm = np.zeros((4, length))
         for idx, nucleotide in enumerate(seq):
             if nucleotide in nucs:
                 pfm[nucs[nucleotide], idx] += 1
+        
+        pfm += 0.01
+        
+        col_sums = np.sum(pfm, axis=0)
+        pwm = np.zeros_like(pfm)
+        
+        for i in range(4):
+            pwm[i, :] = np.log2((pfm[i, :] / col_sums) / background_freqs[i])
+        
+        pwms.append(pwm)
+    
+    return pwms
 
-    pfm = pfm[:4, :]  # Only take rows for A, C, G, T
+def ParseMotifsFile(filename):
+  """
+  Parses motif information from a file, including transposition.
 
-    pfm += 0.01  # Apply pseudocounts to avoid division by zero
-    col_sums = np.sum(pfm, axis=0)
-    pwm = np.zeros(pfm.shape)
+  Parameters:
+      filename (str): Path to the file containing motif information.
 
-    for i in range(4):
-        pwm[i, :] = np.log2((pfm[i, :] / col_sums) / background_freqs[i])
-
-    return pwm
+  Returns:
+      list: List of dictionaries containing motif information.
+  """
+  motifs = []
+  with open(filename, "r") as f:
+    for line in f:
+      if line.startswith(">"):
+        # Header line: store info in a dictionary
+        motif_info = []
+        motif_info.append(line.split()[0].strip(">"))
+        motifs.append(motif_info)
+    return motifs
 
 def ScoreSeq(pwm, sequence):
     """ Score a sequence using a PWM
@@ -433,7 +450,8 @@ if ((args.inputfile is not None) and (args.genome is not None)):
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(sequences)
-       
+       motifs = ParseMotifsFile("../motifs/custom.motifs")
+       print(motifs)
        print(pwms)
        
 
