@@ -11,6 +11,7 @@ from Bio.SeqRecord import SeqRecord
 from scipy.stats import fisher_exact
 import math
 import random
+import timeit
 
 nucs = {"A": 0, "C": 1, "G": 2, "T": 3}
 
@@ -459,24 +460,39 @@ else:
 # Do something with input and genome file if they exist.
 if ((args.inputfile is not None) and (args.genome is not None)):
        
+       # Begin timer, use for runtime comparison against HOMER
+       start = timeit.default_timer()
+
        # Get sequences, store in var sequences
        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
        
+
        # Get reads from sequences lengths 7 to 23
        reads = []
-       i = 7
-       while i < 23:
+       i = 7 # Minimum motif length from HOMER database
+       while i < 23: # Maximum motif length from HOMER database
            reads.append(get_reads(sequences, i))
            i += 1
+
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(reads)
 
+
        # Store HOMER motifs in var motifs
        motifs = ParseMotifsFile("../motifs/custom.motifs")
 
+
        # Find exact matches (TESTING)
-       print(FindExactMatches(reads, motifs))
+       # print(FindExactMatches(reads, motifs))
+
+
+
+
+
+       # End timer
+       stop = timeit.default_timer()
+       print("Time: ", stop - start, " seconds")
        
        
        
