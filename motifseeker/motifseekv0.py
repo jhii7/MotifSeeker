@@ -168,15 +168,7 @@ def GetPWM(binding_sites, background_freqs=[0.25, 0.25, 0.25, 0.25]):
     return pwms
 
 def ParseMotifsFile(filename):
-  """
-  Parses motif information from a file, including transposition.
-
-  Parameters:
-      filename (str): Path to the file containing motif information.
-
-  Returns:
-      list: List of dictionaries containing motif information.
-  """
+  # Outputs a list of lists of motif sequences from HOMER-style motif databases
   motifs = []
   with open(filename, "r") as f:
     for line in f:
@@ -450,9 +442,10 @@ if ((args.inputfile is not None) and (args.genome is not None)):
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(sequences)
+       # Store HOMER motifs in var motifs
        motifs = ParseMotifsFile("../motifs/custom.motifs")
-       print(motifs)
-       print(pwms)
+       
+       
        
 
 
