@@ -25,7 +25,6 @@ git clone https://github.com/jhii7/MotifSeeker.git
 cd MotifSeeker
 python setup.py install
 ```
-
 Make sure you are in the `~/MotifSeeker` directory when you run the last command.
 
 If the install was successful, typing `motifseeker --help` should show a useful message.
@@ -45,8 +44,9 @@ motifseeker <.bed file> <.fa ref genome file> [other options]
 
 To run `motifseeker` on a small test example (using files in this repo):
 ```
-motifseeker example_files/test.bed example_files/test.fa
+motifseeker example_files/smallbed.bed example_files/test.fa
 ```
+Make sure you are in the `~/MotifSeeker` directory when you run the above command.
 
 ### Additional command line option
 
@@ -56,7 +56,7 @@ motifseeker example_files/test.bed example_files/test.fa
 
 The BED file should have a minimum of 3 tab separated columns (additional columns will be ignored)
 (Read the [HOMER documentation](http://homer.ucsd.edu/homer/ngs/peakMotifs.html#:~:text=The%20findMotifsGenome.pl%20program%20is,the%20enrichment%20of%20known%20motifs.) for more on acceptable input files)
-- Column1: chromosome
+- Column1: chromosome number in the format `chr*` where `*` is the chromosome number
 - Column2: starting position
 - Column3: ending position
 
@@ -65,6 +65,8 @@ The fasta file should have the following format
 >chr[name]
 [chromosome sequence]
 ```
+
+To refer to the standard motifs we use, refer to the file `motifs` > `custom.motifs`
 
 ## Contributors
 
