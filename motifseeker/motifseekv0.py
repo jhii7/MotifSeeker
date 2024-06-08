@@ -15,7 +15,6 @@ import timeit
 
 nucs = {"A": 0, "C": 1, "G": 2, "T": 3}
 
-##### Define functions here: #####
 def ERROR(msg):
 	"""
 	Print an error message and die
@@ -64,48 +63,54 @@ def ExtractSequencesFromBed(bed_file, ref_genome_file):
 
     return sequences
 
-def MotifEnrichmentAnalysis(bed_file, ref_genome_file, pwm_list, pwm_thresholds, background_freqs):
+def get_reads(sequences, length):
     """
-    Perform motif enrichment analysis using sequences extracted from BED file.
+    Generate reads of a specified length from a list of sequences.
 
     Parameters
     ----------
-    bed_file : str
-        Path to the BED file containing peak coordinates.
-    ref_genome_file : str
-        Path to the reference genome in FASTA format.
-    pwm_list : list of np.array
-        List of PWMs to be tested.
-    pwm_thresholds : list of float
-        List of thresholds corresponding to each PWM.
-    background_freqs : list of float
-        Background frequencies of A, C, G, T.
+    sequences : list of str
+        List of nucleotide sequences from which to generate reads.
+    length : int
+        Length of the reads to generate.
 
     Returns
     -------
-    results : list of tuple
-        List of tuples containing PWM index, threshold, number of peaks passing,
-        number of background sequences passing, and p-value.
+    reads : list of str
+        List of reads of the specified length extracted from the sequences.
     """
-    peak_seqs = ExtractSequencesFromBed(bed_file, ref_genome_file)
+    # Generates reads of length from sequences, store in array
+    reads = []
+    for sequence in sequences:
+        i = 0
+        end = length
+        while end < len(sequence) + 1:
+            reads.append(sequence[i:end])
+            i += 1
+            end += 1
+    return reads
 
-    # Generate background sequences
-    bg_seqs = [RandomSequence(len(peak_seqs[0]), background_freqs) for _ in range(len(peak_seqs))]
-
-    results = []
-
-    for i in range(len(pwm_list)):
-        pwm = pwm_list[i]
-        thresh = pwm_thresholds[i]
-
-        num_peak_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in peak_seqs])
-        num_bg_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in bg_seqs])
-
-        pval = ComputeEnrichment(len(peak_seqs), num_peak_pass, len(bg_seqs), num_bg_pass)
-
-        results.append((i, thresh, num_peak_pass, num_bg_pass, pval))
-
-    return results
+def RandomSequence(n, freqs=[0.25, 0.25, 0.25, 0.25]):
+    """ Generate a random string of nucleotides of length n
+    
+    Use the given nucleotide frequences
+    
+    Parameters
+    ----------
+    n : int
+       Length of random string to generate
+    freqs : list of float
+       List of frequencies of A, C, G, T
+       
+    Returns
+    -------
+    seq : str
+       random sequence of length n with the specified allele frequencies
+    """
+    seq = "A"*n
+    nucs = ['A', 'C', 'G', 'T']
+    seq = ''.join(random.choices(nucs, weights=freqs, k=n))
+    return seq
 
 def GetPFM(sequences):
     """ Compute the PFM for a set of sequences
@@ -168,39 +173,6 @@ def GetPWM(binding_sites, background_freqs=[0.25, 0.25, 0.25, 0.25]):
     
     return pwms
 
-def ParseMotifsFile(filename):
-  # Outputs a list of lists of motif sequences from HOMER-style motif databases
-  motifs = []
-  with open(filename, "r") as f:
-    for line in f:
-      if line.startswith(">"):
-        #motif_info = []
-        #motif_info.append(line.split()[0].strip(">"))
-        motifs.append(line.split()[0].strip(">"))
-    return motifs
-  
-def FindExactMatches(sequences, motifs):
-    # Find exact matches for motifs in database
-    found_motifs = []
-    for motif in motifs:
-        for sequence in sequences:
-            # Check if motif is present in the sequence using string matching
-            if motif in sequence:
-                found_motifs.append(motif)
-    return found_motifs
-
-def get_reads(sequences, length):
-    # Generates reads of length from sequences, store in array
-    reads = []
-    for sequence in sequences:
-        i = 0
-        end = length
-        while end < len(sequence) + 1:
-            reads.append(sequence[i:end])
-            i += 1
-            end += 1
-    return reads
-
 def ScoreSeq(pwm, sequence):
     """ Score a sequence using a PWM
     
@@ -223,24 +195,6 @@ def ScoreSeq(pwm, sequence):
 
     return score
 
-def RandomSequence(n):
-    """ Generate a random string of nucleotides of length n
-    
-    Parameters
-    ----------
-    n : int
-       Length of random string to generate
-       
-    Returns
-    -------
-    seq : str
-       Random nucleotide string
-    """
-    seq = ""
-    for i in range(n):
-        seq += ["A","C","G","T"][random.randint(4)]
-    return seq
-
 def GetThreshold(null_dist, pval):
     """ Find the threshold to achieve a desired p-value
     
@@ -262,6 +216,53 @@ def GetThreshold(null_dist, pval):
     thresh = 0 
     thresh = np.percentile(null_dist, 100 * (1 - pval))
     return thresh
+
+def ParseMotifsFile(filename):
+    """
+    Parse a file containing motif sequences in HOMER-style format.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file containing motifs.
+
+    Returns
+    -------
+    motifs : list of str
+        List of motif sequences parsed from the file.
+    """
+    # Outputs a list of lists of motif sequences from HOMER-style motif databases
+    motifs = []
+    with open(filename, "r") as f:
+        for line in f:
+            if line.startswith(">"):
+                motifs.append(line.split()[0].strip(">"))
+    return motifs
+  
+def FindExactMatches(sequences, motifs):
+    """
+    Find exact matches for motifs in a list of sequences.
+
+    Parameters
+    ----------
+    sequences : list of str
+        List of nucleotide sequences to search for motifs.
+    motifs : list of str
+        List of motif sequences to search for in the sequences.
+
+    Returns
+    -------
+    found_motifs : list of str
+        List of motifs found in the sequences.
+    """
+    # Find exact matches for motifs in database
+    found_motifs = []
+    for motif in motifs:
+        for sequence in sequences:
+            # Check if motif is present in the sequence using string matching
+            if motif in sequence:
+                found_motifs.append(motif)
+    return found_motifs
 
 def ReverseComplement(sequence):
     """ Get the reverse complement of a sequence
@@ -348,28 +349,6 @@ def ComputeNucFreqs(sequences):
 
     return freqs
 
-def RandomSequence(n, freqs):
-    """ Generate a random string of nucleotides of length n
-    
-    Use the given nucleotide frequences
-    
-    Parameters
-    ----------
-    n : int
-       Length of random string to generate
-    freqs : list of float
-       List of frequencies of A, C, G, T
-       
-    Returns
-    -------
-    seq : str
-       random sequence of length n with the specified allele frequencies
-    """
-    seq = "A"*n
-    nucs = ['A', 'C', 'G', 'T']
-    seq = ''.join(random.choices(nucs, weights=freqs, k=n))
-    return seq
-
 def GetThreshold(null_dist, pval):
     """ Find the threshold to achieve a desired p-value
     
@@ -418,6 +397,49 @@ def ComputeEnrichment(peak_total, peak_motif, bg_total, bg_motif):
 
     _, pval = scipy.stats.fisher_exact(table)
     return pval
+
+def MotifEnrichmentAnalysis(bed_file, ref_genome_file, pwm_list, pwm_thresholds, background_freqs):
+    """
+    Perform motif enrichment analysis using sequences extracted from BED file.
+
+    Parameters
+    ----------
+    bed_file : str
+        Path to the BED file containing peak coordinates.
+    ref_genome_file : str
+        Path to the reference genome in FASTA format.
+    pwm_list : list of np.array
+        List of PWMs to be tested.
+    pwm_thresholds : list of float
+        List of thresholds corresponding to each PWM.
+    background_freqs : list of float
+        Background frequencies of A, C, G, T.
+
+    Returns
+    -------
+    results : list of tuple
+        List of tuples containing PWM index, threshold, number of peaks passing,
+        number of background sequences passing, and p-value.
+    """
+    peak_seqs = ExtractSequencesFromBed(bed_file, ref_genome_file)
+
+    # Generate background sequences
+    bg_seqs = [RandomSequence(len(peak_seqs[0]), background_freqs) for _ in range(len(peak_seqs))]
+
+    results = []
+
+    for i in range(len(pwm_list)):
+        pwm = pwm_list[i]
+        thresh = pwm_thresholds[i]
+
+        num_peak_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in peak_seqs])
+        num_bg_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in bg_seqs])
+
+        pval = ComputeEnrichment(len(peak_seqs), num_peak_pass, len(bg_seqs), num_bg_pass)
+
+        results.append((i, thresh, num_peak_pass, num_bg_pass, pval))
+
+    return results
 
 
     
@@ -473,7 +495,6 @@ if ((args.inputfile is not None) and (args.genome is not None)):
        while i < 25: # Maximum motif length from HOMER database
            reads.append(get_reads(sequences, i))
            i += 1
-
 
        # GetPWM already runs pfms, don't need to run GetPFM twice.
        pwms = GetPWM(reads)
