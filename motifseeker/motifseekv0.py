@@ -90,6 +90,38 @@ def get_reads(sequences, length):
             end += 1
     return reads
 
+def ComputeNucFreqs(sequences):
+    """ Compute nucleotide frequencies of a list of sequences
+    
+    Parameters
+    ----------
+    sequences : list of str
+       List of sequences
+       
+    Returns
+    -------
+    freqs : list of float
+       Frequencies of A, C, G, T in the sequences
+    """
+    freqs = [0.25, 0.25, 0.25, 0.25]
+    count = {'A': 0, 'C': 0, 'G': 0, 'T': 0}
+    total = 0
+
+    # Count each nucleotide
+    for seq in sequences:
+        for nucleotide in seq:
+            if nucleotide in count:
+                count[nucleotide] += 1
+                total += 1
+
+    # Calculate frequencies
+    if total > 0:
+        freqs = [count[n] / total for n in ['A', 'C', 'G', 'T']]
+    else:
+        freqs = [0.25, 0.25, 0.25, 0.25]  # Default to equal distribution if no valid data
+
+    return freqs
+
 def RandomSequence(n, freqs=[0.25, 0.25, 0.25, 0.25]):
     """ Generate a random string of nucleotides of length n
     
@@ -316,38 +348,6 @@ def FindMaxScore(pwm, sequence):
     max_score = max(scan_seq(sequence), scan_seq(ReverseComplement(sequence)))
 
     return max_score
-
-def ComputeNucFreqs(sequences):
-    """ Compute nucleotide frequencies of a list of sequences
-    
-    Parameters
-    ----------
-    sequences : list of str
-       List of sequences
-       
-    Returns
-    -------
-    freqs : list of float
-       Frequencies of A, C, G, T in the sequences
-    """
-    freqs = [0.25, 0.25, 0.25, 0.25]
-    count = {'A': 0, 'C': 0, 'G': 0, 'T': 0}
-    total = 0
-
-    # Count each nucleotide
-    for seq in sequences:
-        for nucleotide in seq:
-            if nucleotide in count:
-                count[nucleotide] += 1
-                total += 1
-
-    # Calculate frequencies
-    if total > 0:
-        freqs = [count[n] / total for n in ['A', 'C', 'G', 'T']]
-    else:
-        freqs = [0.25, 0.25, 0.25, 0.25]  # Default to equal distribution if no valid data
-
-    return freqs
 
 def GetThreshold(null_dist, pval):
     """ Find the threshold to achieve a desired p-value
