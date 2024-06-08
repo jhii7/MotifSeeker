@@ -420,26 +420,10 @@ def MotifEnrichmentAnalysis(peak_seqs, pwm_list, pwm_thresholds, background_freq
         List of tuples containing PWM index, threshold, number of peaks passing,
         number of background sequences passing, and p-value.
     """
-    # peak_seqs = ExtractSequencesFromBed(bed_file, ref_genome_file)
 
-    # # Generate background sequences
-    # bg_seqs = [RandomSequence(len(peak_seqs[0]), background_freqs) for _ in range(len(peak_seqs))]
-
-    # results = []
-
-    # for i in range(len(pwm_list)):
-    #     pwm = pwm_list[i]
-    #     thresh = pwm_thresholds[i]
-
-    #     num_peak_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in peak_seqs])
-    #     num_bg_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in bg_seqs])
-
-    #     pval = ComputeEnrichment(len(peak_seqs), num_peak_pass, len(bg_seqs), num_bg_pass)
-
-    #     results.append((i, thresh, num_peak_pass, num_bg_pass, pval))
-
-    # return results
-
+    if (args.pval is not None) :
+        pval_threshold = args.pval
+    
     bg_seqs = [RandomSequence(len(peak_seqs[0]), background_freqs) for _ in range(len(peak_seqs))]
 
     results = []
@@ -564,10 +548,3 @@ if ((args.inputfile is not None) and (args.genome is not None)):
         # End timer
         stop = timeit.default_timer()
         print("Time: ", stop - start, " seconds")
-       
-       
-       
-
-
-
-
