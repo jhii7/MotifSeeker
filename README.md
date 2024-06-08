@@ -66,7 +66,7 @@ The fasta file should have the following format
 [chromosome sequence]
 ```
 
-To refer to the standard motifs we use, refer to the file `motifs` > `custom.motifs`
+To refer to the standard motifs we use, refer to the file under `motifs` > `custom.motifs`
 
 ## Contributors
 
