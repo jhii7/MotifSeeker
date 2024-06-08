@@ -350,8 +350,7 @@ def FindMaxScore(pwm, sequence):
     return max_score
 
 def GetThreshold(null_dist, pval):
-    """ Find the threshold to achieve a desired p-value
-    
+    """
     Given a null distribution (list of values),
     find the threshold to achieve a desired p-value
     
@@ -398,7 +397,7 @@ def ComputeEnrichment(peak_total, peak_motif, bg_total, bg_motif):
     _, pval = scipy.stats.fisher_exact(table)
     return pval
 
-def MotifEnrichmentAnalysis(bed_file, ref_genome_file, pwm_list, pwm_thresholds, background_freqs):
+def MotifEnrichmentAnalysis(peak_seqs, pwm_list, pwm_thresholds, background_freqs, pval_threshold=0.05):
     """
     Perform motif enrichment analysis using sequences extracted from BED file.
 
@@ -421,9 +420,26 @@ def MotifEnrichmentAnalysis(bed_file, ref_genome_file, pwm_list, pwm_thresholds,
         List of tuples containing PWM index, threshold, number of peaks passing,
         number of background sequences passing, and p-value.
     """
-    peak_seqs = ExtractSequencesFromBed(bed_file, ref_genome_file)
+    # peak_seqs = ExtractSequencesFromBed(bed_file, ref_genome_file)
 
-    # Generate background sequences
+    # # Generate background sequences
+    # bg_seqs = [RandomSequence(len(peak_seqs[0]), background_freqs) for _ in range(len(peak_seqs))]
+
+    # results = []
+
+    # for i in range(len(pwm_list)):
+    #     pwm = pwm_list[i]
+    #     thresh = pwm_thresholds[i]
+
+    #     num_peak_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in peak_seqs])
+    #     num_bg_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in bg_seqs])
+
+    #     pval = ComputeEnrichment(len(peak_seqs), num_peak_pass, len(bg_seqs), num_bg_pass)
+
+    #     results.append((i, thresh, num_peak_pass, num_bg_pass, pval))
+
+    # return results
+
     bg_seqs = [RandomSequence(len(peak_seqs[0]), background_freqs) for _ in range(len(peak_seqs))]
 
     results = []
@@ -436,10 +452,30 @@ def MotifEnrichmentAnalysis(bed_file, ref_genome_file, pwm_list, pwm_thresholds,
         num_bg_pass = np.sum([int(FindMaxScore(pwm, seq) > thresh) for seq in bg_seqs])
 
         pval = ComputeEnrichment(len(peak_seqs), num_peak_pass, len(bg_seqs), num_bg_pass)
+        enriched = pval < pval_threshold
 
-        results.append((i, thresh, num_peak_pass, num_bg_pass, pval))
+        results.append((i, motifs[i], thresh, num_peak_pass, num_bg_pass, pval, enriched))
 
-    return results
+    return peak_seqs, bg_seqs, results
+
+def PrintResults(peak_seqs, bg_seqs, results):
+    """
+    Print the results of motif enrichment analysis.
+
+    Parameters
+    ----------
+    peak_seqs : list of str
+        List of sequences extracted from the peaks.
+    bg_seqs : list of str
+        List of background sequences.
+    results : list of tuple
+        List of tuples containing PWM index, threshold, number of peaks passing,
+        number of background sequences passing, p-value, and enrichment status.
+    """
+    for result in results:
+        pwm_index, motif_seq, thresh, num_peak_pass, num_bg_pass, pval, enriched = result
+        enriched_str = "yes" if enriched else "no"
+        print(f"{pwm_index}\t{motif_seq}\t{num_peak_pass}/{len(peak_seqs)}\t{num_bg_pass}/{len(bg_seqs)}\t{pval:.3e}\t{enriched_str}")
 
 
     
@@ -482,37 +518,52 @@ else:
 # Do something with input and genome file if they exist.
 if ((args.inputfile is not None) and (args.genome is not None)):
        
-       # Begin timer, use for runtime comparison against HOMER
-       start = timeit.default_timer()
+        # Begin timer, use for runtime comparison against HOMER
+        start = timeit.default_timer()
 
-       # Get sequences, store in var sequences
-       sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
+
+
+        # Get sequences, store in var sequences
+        sequences = ExtractSequencesFromBed(args.inputfile, args.genome)
        
 
-       # Get reads from sequences lengths 8 to 25
-       reads = []
-       i = 8 # Minimum motif length from HOMER database
-       while i < 25: # Maximum motif length from HOMER database
-           reads.append(get_reads(sequences, i))
-           i += 1
+        # Get reads from sequences lengths 8 to 25
+        reads = []
+        i = 8 # Minimum motif length from HOMER database
+        while i < 25: # Maximum motif length from HOMER database
+            reads.append(get_reads(sequences, i))
+            i += 1
 
-       # GetPWM already runs pfms, don't need to run GetPFM twice.
-       pwms = GetPWM(reads)
-
-
-       # Store HOMER motifs in var motifs
-       motifs = ParseMotifsFile("../motifs/custom.motifs")
-
-       # Find exact matches (TESTING)
-       # print(FindExactMatches(reads, motifs))
+        # GetPWM already runs pfms, don't need to run GetPFM twice.
+        pwms = GetPWM(reads)
 
 
+        # Store HOMER motifs in var motifs
+        motifs = ParseMotifsFile("../motifs/custom.motifs")
+        null_dist = null_dist = [
+        0.1, 0.2, 0.15, 0.3, 0.25, 0.35, 0.4, 0.45, 0.5, 0.55,
+        0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05,
+        1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55,
+        1.6, 1.65, 1.7, 1.75, 1.8, 1.85, 1.9, 1.95, 2.0, 2.05,
+        2.1, 2.15, 2.2, 2.25, 2.3, 2.35, 2.4, 2.45, 2.5, 2.55
+        ]
 
+        thresholds = [GetThreshold(null_dist, 0.05) for _ in pwms]
 
+        # Find exact matches (TESTING)
+        # print(FindExactMatches(reads, motifs))
 
-       # End timer
-       stop = timeit.default_timer()
-       print("Time: ", stop - start, " seconds")
+        peak_seqs, bg_seqs, results = MotifEnrichmentAnalysis(
+        peak_seqs=sequences,
+        pwm_list=pwms,
+        pwm_thresholds=thresholds,
+        background_freqs=[0.25, 0.25, 0.25, 0.25])
+
+        PrintResults(peak_seqs, bg_seqs, results)
+
+        # End timer
+        stop = timeit.default_timer()
+        print("Time: ", stop - start, " seconds")
        
        
        
