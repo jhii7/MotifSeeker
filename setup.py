@@ -21,11 +21,11 @@ setup(
     version=VERSION,
     description='Motif Enrichment Analysis Tool',
     author='Justin Hii, Tusha Karnani, Numa Yazadi',
-    author_email='mgymrek@ucsd.edu',
+    author_email='tkarnani@ucsd.edu',
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "motifseeker=motifseeker.motifseeker:main"
+            "motifseeker=motifseeker.motifseekv0:main"
         ],
     },
 )

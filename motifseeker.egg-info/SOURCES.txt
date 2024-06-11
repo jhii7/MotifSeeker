@@ -1,7 +1,9 @@
 README.md
 setup.py
 motifseeker/__init__.py
+motifseeker/functions.py
 motifseeker/motifseeker.py
+motifseeker/motifseekv0.py
 motifseeker/myutils.py
 motifseeker/version.py
 motifseeker.egg-info/PKG-INFO
